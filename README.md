@@ -1,4 +1,5 @@
 # CS50's Finance
+![Screenshot](https://user-images.githubusercontent.com/69594457/95256563-e4755a00-081a-11eb-80e6-298d8e56abca.png)
 
 ## Introduction
 
