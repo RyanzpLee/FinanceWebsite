@@ -32,13 +32,16 @@ def after_request(response):
 app.jinja_env.filters["usd"] = usd
 
 # Configure session to use filesystem (instead of signed cookies)
-app.config["SESSION_FILE_DIR"] = mkdtemp()
+# app.config["SESSION_FILE_DIR"] = mkdtemp()
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
+
+
 # Configure CS50 Library to use SQLite database
-db = SQL("postgres://auufjngqybuokd:5d121905793f26e9ed88953b938ee03cba373b2f36aab9d0880099a10294d44c@ec2-52-31-94-195.eu-west-1.compute.amazonaws.com:5432/d349o1q6jjhetr")
+db = SQL("sqlite:///finance.db")
+# db = SQL("postgres://auufjngqybuokd:5d121905793f26e9ed88953b938ee03cba373b2f36aab9d0880099a10294d44c@ec2-52-31-94-195.eu-west-1.compute.amazonaws.com:5432/d349o1q6jjhetr")
 
 # # Make sure API key is set
 # if not os.environ.get("API_KEY"):
@@ -53,11 +56,11 @@ def index():
 
     #  Select all shares for the user
     rows = db.execute(
-        "SELECT symbol, name, shares FROM users_shares WHERE user_id = ?", user)
+        "SELECT symbol, name, shares FROM users_shares WHERE user_id = ?", {user})
     
     
     # Select the user's current cash
-    funds = db.execute("SELECT cash FROM users WHERE id = ?", user)
+    funds = db.execute("SELECT cash FROM users WHERE id = ?", {user})
     price = {}
     total = {}
     grand_total = 0
@@ -69,7 +72,7 @@ def index():
         grand_total += info["price"] * row["shares"]
 
     grand_total  += float(funds[0]['cash']) 
-    return render_template("index.html", rows=rows, price=price, funds=usd(funds[0]['cash']), total=total, grand_total=usd(grand_total))
+    return render_template("index.html", rows=rows, price=price, funds=usd(funds[0]['cash']), {total=total, grand_total=usd(grand_total)})
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -97,22 +100,18 @@ def buy():
         if cash[0]["cash"] > total:
             # Store purchase history in purchases table
             db.execute(
-                "INSERT INTO transactions (user_id, symbol, shares, share_price, value) VALUES (?,?,?,?,?)", (user, info["symbol"], amount, info["price"], total))
+                "INSERT INTO transactions (user_id, symbol, shares, share_price, value) VALUES (?,?,?,?,?)", {user, info["symbol"], amount, info["price"], total})
 
             # Update users_shares with new purchase
-            if db.execute("SELECT * FROM users_shares WHERE user_id = ? and symbol = ?", (user, info["symbol"])):
+            if db.execute("SELECT * FROM users_shares WHERE user_id = ? and symbol = ?", {user, info["symbol"]}):
                 db.execute(
-                    "UPDATE users_shares SET shares = shares + ? WHERE user_id = ? and symbol = ?",
-                    (amount, user, info["symbol"]),
-                )
+                    "UPDATE users_shares SET shares = shares + ? WHERE user_id = ? and symbol = ?", {amount, user, info["symbol"]})
             else:
                 db.execute(
-                    "INSERT INTO users_shares (user_id, symbol, name, shares) VALUES (?,?,?,?)",
-                    (user, info["symbol"], info["name"], amount),
-                )
+                    "INSERT INTO users_shares (user_id, symbol, name, shares) VALUES (?,?,?,?)", {user, info["symbol"], info["name"], amount})
 
             # Update user cash
-            db.execute("UPDATE users SET cash = ? WHERE id = ?", (cash[0]["cash"] - total, user))
+            db.execute("UPDATE users SET cash = ? WHERE id = ?", {cash[0]["cash"] - total, user})
 
         elif not cash or cash[0]["cash"] < total:
             return apology("Sorry, you do not have enough money", 403)
@@ -127,7 +126,7 @@ def history():
     """Show history of transactions"""
     user = session.get("user_id")
     
-    rows = db.execute("SELECT symbol, date_purchased, shares, share_price, value FROM transactions WHERE user_id = ? ORDER BY date_purchased", user)
+    rows = db.execute("SELECT symbol, date_purchased, shares, share_price, value FROM transactions WHERE user_id = ? ORDER BY date_purchased", {user})
     return render_template("history.html", rows=rows)
 
 @app.route("/account")
@@ -145,7 +144,7 @@ def change_pwd():
         old_pwd = request.form.get("old_pwd")
         new_pwd = request.form.get("new_pwd")
         confirmation = request.form.get("confirmation")
-        pwd_hash = db.execute("SELECT hash FROM users WHERE id= ?", user)
+        pwd_hash = db.execute("SELECT hash FROM users WHERE id= ?", {user})
         
         if not password_requirements(new_pwd):
             return apology("New password does not meet requirements")
@@ -153,7 +152,7 @@ def change_pwd():
         
         if check_password_hash(pwd_hash[0]['hash'],old_pwd) and new_pwd == confirmation:
             new_pwd_hash = generate_password_hash(new_pwd)
-            db.execute("UPDATE users SET hash = ? WHERE id = ?", (new_pwd_hash, user))
+            db.execute("UPDATE users SET hash = ? WHERE id = ?", {new_pwd_hash, user})
             flash("Password Changed")
             return redirect("/")
         else:
@@ -182,7 +181,7 @@ def login():
             return apology("must provide password", 403)
 
         # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE username = :username",username=request.form.get("username"))
+        rows = db.execute("SELECT * FROM users WHERE username = :username", {username=request.form.get("username")})
 
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(
@@ -256,7 +255,8 @@ def register():
             return apology("Password must be 8 characters long and contain uppercase, and lower case, and a digit from 0-9 and a special character",403)
 
         if check:
-            db.execute("INSERT INTO users (username, hash) VALUES (?, ?)",(username, password_hash))
+            db.execute("INSERT INTO users (username, hash) VALUES (:username, :password_hash)", {"username": username, "password_hash": password_hash})
+            db.commit()
 
     return redirect("/")
 
@@ -268,14 +268,14 @@ def sell():
     user = session.get("user_id")
     
     if request.method == "GET":
-        rows = db.execute("SELECT symbol FROM users_shares WHERE user_id = ?", user)
+        rows = db.execute("SELECT symbol FROM users_shares WHERE user_id = ?", {user})
         return render_template("sell.html", rows=rows)
     else:
         symbol = request.form.get("symbol")
         amount = request.form.get("shares")
         
-        rows = db.execute("SELECT symbol FROM users_shares WHERE user_id = ?", user)
-        stock = db.execute("SELECT shares FROM users_shares WHERE symbol = ?", symbol)
+        rows = db.execute("SELECT symbol FROM users_shares WHERE user_id = ?", {user})
+        stock = db.execute("SELECT shares FROM users_shares WHERE symbol = ?", {symbol})
         
         if not symbol:
             return apology("You did not pick a stock, or you do not own any shares", 403)
@@ -287,12 +287,12 @@ def sell():
         
         total = float(info["price"]) * float(amount)
         
-        db.execute("UPDATE users_shares SET shares = shares - ? WHERE user_id = ? and symbol = ?", (amount, user, info["symbol"]))
-        db.execute("UPDATE users SET cash = cash + ? WHERE id= ?", (total, user))
+        db.execute("UPDATE users_shares SET shares = shares - ? WHERE user_id = ? and symbol = ?", {amount, user, info["symbol"]})
+        db.execute("UPDATE users SET cash = cash + ? WHERE id= ?", {total, user})
         
-        db.execute("INSERT INTO transactions (user_id, symbol, shares, share_price, value) VALUES (?,?,?,?,?)",(user, info["symbol"], int(amount) * -1, info["price"], total))
+        db.execute("INSERT INTO transactions (user_id, symbol, shares, share_price, value) VALUES (?,?,?,?,?)", {user, info["symbol"], int(amount) * -1, info["price"], total})
         
-        
+        db.commit()
         flash("You have sold your shares")
         return redirect("/")
 
@@ -306,7 +306,7 @@ def errorhandler(e):
 
 # Checks if username exists in database
 def validate(username):
-    check = db.execute("SELECT * FROM users WHERE username = :username", username=username)
+    check = db.execute("SELECT * FROM users WHERE username = :username", {"username": username})
 
     return True if check else False
 
