@@ -317,7 +317,7 @@ def errorhandler(e):
 
 # Checks if username exists in database
 def validate(username):
-    check = db.execute("SELECT * FROM users WHERE username=?", username)
+    check = db.execute("SELECT * FROM users WHERE username = :username", (username=username))
 
     return True if check else False
 
