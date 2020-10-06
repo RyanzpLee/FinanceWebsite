@@ -1,0 +1,33 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Buy Stocks
+{% endblock %}
+
+{% block main %}
+
+    <form action="/buy" method="POST">
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" name="symbol" placeholder="Stock symbol" type="text">
+        </div>
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" name="shares" placeholder="# of shares to buy" type="text">
+        </div>
+        <button class="btn btn-primary" type="submit">Buy</button>
+    </form>
+
+    
+    <div class="buy_desc">
+        <h2>Description</h2>
+        <p>To buy stocks, you must input the company stock's symbol and type the number of shares you wish to buy.</p>
+        <p>You can only:</p>
+
+        <ul>
+            <li>Buy a positive integer amount of stocks.</li>
+            <li>Buy if you have the funds to do so.</li>
+            <li>Buy a stock if it exists on the IEX Cloud.</li>
+        </ul>
+    </div>
+
+
+{% endblock %}

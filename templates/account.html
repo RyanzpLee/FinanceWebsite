@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Account
+{% endblock %}
+
+{% block main %}
+<h1 id="pwd_title" >Change password</h1>
+    <form action="/change_pwd" method="POST">
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" type="password" name="old_pwd" placeholder="Old Password">
+        </div>
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" type="password" name="new_pwd" placeholder="New Password">
+        </div>
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" type="password" name="confirmation" placeholder="New Password (again)">
+        </div>
+
+        <button class="btn btn-primary" type="submit">Change</button>
+    </form>
+
+    </form>
+
+{% endblock %}
