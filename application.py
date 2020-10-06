@@ -97,9 +97,7 @@ def buy():
         if cash[0]["cash"] > total:
             # Store purchase history in purchases table
             db.execute(
-                "INSERT INTO transactions (user_id, symbol, shares, share_price, value) VALUES (?,?,?,?,?)",
-                (user, info["symbol"], amount, info["price"], total),
-            )
+                "INSERT INTO transactions (user_id, symbol, shares, share_price, value) VALUES (?,?,?,?,?)", (user, info["symbol"], amount, info["price"], total))
 
             # Update users_shares with new purchase
             if db.execute("SELECT * FROM users_shares WHERE user_id = ? and symbol = ?", (user, info["symbol"])):
@@ -255,16 +253,10 @@ def register():
 
         if not password_requirements(password):
             check = False
-            return apology(
-                "Password must be 8 characters long and contain uppercase, and lower case, and a digit from 0-9 and a special character",
-                403,
-            )
+            return apology("Password must be 8 characters long and contain uppercase, and lower case, and a digit from 0-9 and a special character",403)
 
         if check:
-            db.execute(
-                "INSERT INTO users (username, hash) VALUES (?, ?)",
-                (username, password_hash),
-            )
+            db.execute("INSERT INTO users (username, hash) VALUES (?, ?)",(username, password_hash))
 
     return redirect("/")
 
