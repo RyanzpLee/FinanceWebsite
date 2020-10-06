@@ -72,7 +72,7 @@ def index():
         grand_total += info["price"] * row["shares"]
 
     grand_total  += float(funds[0]['cash']) 
-    return render_template("index.html", rows=rows, price=price, funds=usd(funds[0]['cash']), (total=total, grand_total=usd(grand_total)))
+    return render_template("index.html", rows=rows, price=price, funds=usd(funds[0]['cash']), total=total, grand_total=usd(grand_total))
 
 
 @app.route("/buy", methods=["GET", "POST"])
