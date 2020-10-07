@@ -38,6 +38,14 @@ main img {
   max-width: 100%;
 }
 
+main .intro {
+  margin-bottom: 3rem;
+}
+
+main .register {
+  margin-bottom: 1rem;
+}
+
 main .buy_desc {
   padding: 0.5rem;
   margin-top: 5rem;
@@ -69,13 +77,11 @@ main #message {
   position: relative;
   padding: 20px;
   margin-top: 10px;
-
 }
 
 main #message p {
   padding: 10px 35px;
   font-size: 18px;
-
 }
 
 main .valid {

@@ -5,6 +5,17 @@
 {% endblock %}
 
 {% block main %}
+
+<div class="intro">
+    <h3 class="m-4"> Welcome to my Finance Web App</h4>
+    <h5 class="m-4">Users can virtually 'buy' and 'sell' stocks and add to your portfolio</h5> 
+    
+    <h4 class="m-5"> <a href="/register">Register</a> for an account and to try it out. </h4>
+    <p class="m-2 text-center text-muted">Or alternatively you can use this demo account:</p>
+    <p class="m-2 text-center text-muted">Username: demo</p>
+    <p class="m-2 text-center text-muted">Password: Demouser1!</p>
+</div>
+
     <form action="/login" method="post">
         <div class="form-group">
             <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text" required pattern=".*\S.*">
