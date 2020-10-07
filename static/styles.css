@@ -53,3 +53,47 @@ main #current_cash {
   margin-top: 3rem;
   margin-bottom: 3rem;
 }
+
+/* Show red border if invalid */
+main input:not(:placeholder-shown) {
+  border-color: hsl(0, 67%, 50%);
+}
+
+main input:valid {
+  border-color: hsl(120, 76%, 50%);
+}
+
+main #message {
+  display: none;
+  color: #000;
+  position: relative;
+  padding: 20px;
+  margin-top: 10px;
+
+}
+
+main #message p {
+  padding: 10px 35px;
+  font-size: 18px;
+
+}
+
+main .valid {
+  color: green;
+}
+
+main .valid::before {
+  position: relative;
+  left: -35px;
+  content: '\2713';
+}
+
+main .invalid {
+  color: red;
+}
+
+main .invalid::before {
+  position: relative;
+  left: -35px;
+  content: '\0078';
+}

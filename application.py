@@ -38,7 +38,6 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 
-
 # Configure CS50 Library to use SQLite database
 db = SQL("sqlite:///finance.db")
 # db = SQL("postgres://auufjngqybuokd:5d121905793f26e9ed88953b938ee03cba373b2f36aab9d0880099a10294d44c@ec2-52-31-94-195.eu-west-1.compute.amazonaws.com:5432/d349o1q6jjhetr")
@@ -56,8 +55,9 @@ def index():
 
     #  Select all shares for the user
     rows = db.execute(
-        "SELECT symbol, name, shares FROM users_shares WHERE user_id = ?", (user))
-    
+        "SELECT symbol, name, shares FROM users_shares WHERE user_id = ?", (user)
+    )
+
     # Select the user's current cash
     funds = db.execute("SELECT cash FROM users WHERE id = ?", (user))
     price = {}
@@ -70,8 +70,15 @@ def index():
         total[row["symbol"]] = usd(info["price"] * row["shares"])
         grand_total += info["price"] * row["shares"]
 
-    grand_total  += float(funds[0]['cash']) 
-    return render_template("index.html", rows=rows, price=price, funds=usd(funds[0]['cash']), total=total, grand_total=usd(grand_total))
+    grand_total += float(funds[0]["cash"])
+    return render_template(
+        "index.html",
+        rows=rows,
+        price=price,
+        funds=usd(funds[0]["cash"]),
+        total=total,
+        grand_total=usd(grand_total),
+    )
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -99,22 +106,34 @@ def buy():
         if cash[0]["cash"] > total:
             # Store purchase history in purchases table
             db.execute(
-                "INSERT INTO transactions (user_id, symbol, shares, share_price, value) VALUES (?,?,?,?,?)", (user, info["symbol"], amount, info["price"], total))
+                "INSERT INTO transactions (user_id, symbol, shares, share_price, value) VALUES (?,?,?,?,?)",
+                (user, info["symbol"], amount, info["price"], total),
+            )
 
             # Update users_shares with new purchase
-            if db.execute("SELECT * FROM users_shares WHERE user_id = ? and symbol = ?", (user, info["symbol"])):
+            if db.execute(
+                "SELECT * FROM users_shares WHERE user_id = ? and symbol = ?",
+                (user, info["symbol"]),
+            ):
                 db.execute(
-                    "UPDATE users_shares SET shares = shares + ? WHERE user_id = ? and symbol = ?", (amount, user, info["symbol"]))
+                    "UPDATE users_shares SET shares = shares + ? WHERE user_id = ? and symbol = ?",
+                    (amount, user, info["symbol"]),
+                )
             else:
                 db.execute(
-                    "INSERT INTO users_shares (user_id, symbol, name, shares) VALUES (?,?,?,?)", (user, info["symbol"], info["name"], amount))
+                    "INSERT INTO users_shares (user_id, symbol, name, shares) VALUES (?,?,?,?)",
+                    (user, info["symbol"], info["name"], amount),
+                )
 
             # Update user cash
-            db.execute("UPDATE users SET cash = ? WHERE id = ?", (cash[0]["cash"] - total, user))
+            db.execute(
+                "UPDATE users SET cash = ? WHERE id = ?",
+                (cash[0]["cash"] - total, user),
+            )
 
         elif not cash or cash[0]["cash"] < total:
             return apology("Sorry, you do not have enough money", 403)
-        
+
         flash("You have successfully bought shares")
         return redirect("/")
 
@@ -124,9 +143,13 @@ def buy():
 def history():
     """Show history of transactions"""
     user = session.get("user_id")
-    
-    rows = db.execute("SELECT symbol, date_purchased, shares, share_price, value FROM transactions WHERE user_id = ? ORDER BY date_purchased", (user))
+
+    rows = db.execute(
+        "SELECT symbol, date_purchased, shares, share_price, value FROM transactions WHERE user_id = ? ORDER BY date_purchased",
+        (user),
+    )
     return render_template("history.html", rows=rows)
+
 
 @app.route("/account")
 @login_required
@@ -134,51 +157,61 @@ def account():
     user = session.get("user_id")
     rows = db.execute("SELECT * FROM users WHERE id = ?", user)
     cash = rows[0]["cash"]
-    
+
     curr_cash = usd(cash)
     return render_template("account.html", cash=curr_cash)
+
 
 @app.route("/change_pwd", methods=["GET", "POST"])
 @login_required
 def change_pwd():
     user = session.get("user_id")
-    
+
     if request.method == "POST":
         old_pwd = request.form.get("old_pwd")
         new_pwd = request.form.get("new_pwd")
         confirmation = request.form.get("confirmation")
         pwd_hash = db.execute("SELECT hash FROM users WHERE id= ?", (user))
-        
+
         if not password_requirements(new_pwd):
             return apology("New password does not meet requirements")
 
-        
-        if check_password_hash(pwd_hash[0]['hash'],old_pwd) and new_pwd == confirmation:
+        if (
+            check_password_hash(pwd_hash[0]["hash"], old_pwd)
+            and new_pwd == confirmation
+        ):
             new_pwd_hash = generate_password_hash(new_pwd)
             db.execute("UPDATE users SET hash = ? WHERE id = ?", (new_pwd_hash, user))
             flash("Password Changed")
             return redirect("/")
         else:
-            return apology("You have not entered the correct password")   
-            
+            return apology("You have not entered the correct password")
+
+
 @app.route("/addcash", methods=["GET", "POST"])
 @login_required
 def addcash():
     user = session.get("user_id")
     rows = db.execute("SELECT * FROM users WHERE id = ?", user)
-    
+
     if request.method == "POST":
         amount = request.form.get("cash")
-        
+
         if not amount or amount.isalpha() or int(amount) <= 0:
             return apology("You must enter a valid amount to add", 403)
 
-        db.execute("UPDATE users SET cash = cash + ? WHERE id = ?", (float(amount), user))
-        
-        db.execute("INSERT INTO transactions (user_id, symbol, shares, share_price, value ) VALUES (?,?,?,?,?)", (user, "CASH", 1, amount, amount))
+        db.execute(
+            "UPDATE users SET cash = cash + ? WHERE id = ?", (float(amount), user)
+        )
+
+        db.execute(
+            "INSERT INTO transactions (user_id, symbol, shares, share_price, value ) VALUES (?,?,?,?,?)",
+            (user, "CASH", 1, amount, amount),
+        )
 
     flash("You have successfully added funds to your account", "success")
     return redirect("/")
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -199,7 +232,9 @@ def login():
             return apology("must provide password", 403)
 
         # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE username = ?", (request.form.get("username")) )
+        rows = db.execute(
+            "SELECT * FROM users WHERE username = ?", (request.form.get("username"))
+        )
 
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(
@@ -270,10 +305,16 @@ def register():
 
         if not password_requirements(password):
             check = False
-            return apology("Password must be 8 characters long and contain uppercase, and lower case, and a digit from 0-9 and a special character",403)
+            return apology(
+                "Password must be 8 characters long and contain uppercase, and lower case, and a digit from 0-9 and a special character",
+                403,
+            )
 
         if check:
-            db.execute("INSERT INTO users (username, hash) VALUES (?,?)", (username, password_hash))
+            db.execute(
+                "INSERT INTO users (username, hash) VALUES (?,?)",
+                (username, password_hash),
+            )
 
     return redirect("/")
 
@@ -283,32 +324,40 @@ def register():
 def sell():
     """Sell shares of stock"""
     user = session.get("user_id")
-    
+
     if request.method == "GET":
         rows = db.execute("SELECT symbol FROM users_shares WHERE user_id = ?", (user))
         return render_template("sell.html", rows=rows)
     else:
         symbol = request.form.get("symbol")
         amount = request.form.get("shares")
-        
+
         rows = db.execute("SELECT symbol FROM users_shares WHERE user_id = ?", (user))
         stock = db.execute("SELECT shares FROM users_shares WHERE symbol = ?", (symbol))
-        
+
         if not symbol:
-            return apology("You did not pick a stock, or you do not own any shares", 403)
-        
-        if not amount or int(amount) < 0 or int(amount) > int(stock[0]['shares']):
+            return apology(
+                "You did not pick a stock, or you do not own any shares", 403
+            )
+
+        if not amount or int(amount) < 0 or int(amount) > int(stock[0]["shares"]):
             return apology("You do not own that many shares", 403)
-        
+
         info = lookup(symbol)
-        
+
         total = float(info["price"]) * float(amount)
-        
-        db.execute("UPDATE users_shares SET shares = shares - ? WHERE user_id = ? and symbol = ?", (amount, user, info["symbol"]))
+
+        db.execute(
+            "UPDATE users_shares SET shares = shares - ? WHERE user_id = ? and symbol = ?",
+            (amount, user, info["symbol"]),
+        )
         db.execute("UPDATE users SET cash = cash + ? WHERE id= ?", (total, user))
-        
-        db.execute("INSERT INTO transactions (user_id, symbol, shares, share_price, value) VALUES (?,?,?,?,?)", (user, info["symbol"], int(amount) * -1, info["price"], total))
-        
+
+        db.execute(
+            "INSERT INTO transactions (user_id, symbol, shares, share_price, value) VALUES (?,?,?,?,?)",
+            (user, info["symbol"], int(amount) * -1, info["price"], total),
+        )
+
         flash("You have sold your shares")
         return redirect("/")
 
@@ -329,35 +378,35 @@ def validate(username):
 
 # Checks the password string for the requirements
 def password_requirements(pwd):
-    special = [
-        "$",
-        "@",
-        "!",
-        "?",
-        '"',
-        "'",
-        "#",
-        "%",
-        "^",
-        "&",
-        "*",
-        "(",
-        ")",
-        "_",
-        "-",
-        "=",
-        "+",
-        "{",
-        "}",
-        "[",
-        "]",
-        ";",
-        ":",
-        ",",
-        ".",
-        "?",
-        "/",
-    ]
+    # special = [
+    #     "$",
+    #     "@",
+    #     "!",
+    #     "?",
+    #     '"',
+    #     "'",
+    #     "#",
+    #     "%",
+    #     "^",
+    #     "&",
+    #     "*",
+    #     "(",
+    #     ")",
+    #     "_",
+    #     "-",
+    #     "=",
+    #     "+",
+    #     "{",
+    #     "}",
+    #     "[",
+    #     "]",
+    #     ";",
+    #     ":",
+    #     ",",
+    #     ".",
+    #     "?",
+    #     "/",
+    # ]
     val = True
     if len(pwd) < 8:
         val = False
@@ -367,8 +416,8 @@ def password_requirements(pwd):
         val = False
     if not any(char.islower() for char in pwd):
         val = False
-    if not any(char in special for char in pwd):
-        val = False
+    # if not any(char in special for char in pwd):
+    #     val = False
     if val:
         return True
 
@@ -380,4 +429,4 @@ for code in default_exceptions:
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host="0.0.0.0", port=port)
