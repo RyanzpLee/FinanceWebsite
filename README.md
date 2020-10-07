@@ -17,6 +17,11 @@ In addition I added more functionality to allow the user to change their passwor
 
 This webapp uses Python3, and Flask framework. The HTML styling was done with Bootstrap. [IEX API](https://iexcloud.io/) is also used to get stock values in real time with an api call and SQLite3 has been used to control the SQL database to store user information.
 
+## Try it out
+
+You can try the webapp out at this link [here](https://ryanfinance.herokuapp.com/)
+
+
 ## Run
 
 You will need [Python](https://www.python.org/downloads/) and [Flask](https://flask.palletsprojects.com/en/1.1.x/installation/) installed on your computer to run this application.
