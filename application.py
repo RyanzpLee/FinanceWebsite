@@ -181,7 +181,7 @@ def login():
             return apology("must provide password", 403)
 
         # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE username = :username", (username=request.form.get("username")))
+        rows = db.execute("SELECT * FROM users WHERE username = ?", (request.form.get("username")) )
 
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(
@@ -255,8 +255,7 @@ def register():
             return apology("Password must be 8 characters long and contain uppercase, and lower case, and a digit from 0-9 and a special character",403)
 
         if check:
-            db.execute("INSERT INTO users (username, hash) VALUES (:username, :password_hash)", ("username": username, "password_hash": password_hash))
-            db.commit()
+            db.execute("INSERT INTO users (username, hash) VALUES (?,?)", (username, password_hash))
 
     return redirect("/")
 
@@ -292,7 +291,6 @@ def sell():
         
         db.execute("INSERT INTO transactions (user_id, symbol, shares, share_price, value) VALUES (?,?,?,?,?)", (user, info["symbol"], int(amount) * -1, info["price"], total))
         
-        db.commit()
         flash("You have sold your shares")
         return redirect("/")
 
@@ -306,7 +304,7 @@ def errorhandler(e):
 
 # Checks if username exists in database
 def validate(username):
-    check = db.execute("SELECT * FROM users WHERE username = :username", ("username": username))
+    check = db.execute("SELECT * FROM users WHERE username = ?", (username))
 
     return True if check else False
 
