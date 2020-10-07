@@ -58,7 +58,6 @@ def index():
     rows = db.execute(
         "SELECT symbol, name, shares FROM users_shares WHERE user_id = ?", (user))
     
-    
     # Select the user's current cash
     funds = db.execute("SELECT cash FROM users WHERE id = ?", (user))
     price = {}
@@ -132,8 +131,12 @@ def history():
 @app.route("/account")
 @login_required
 def account():
+    user = session.get("user_id")
+    rows = db.execute("SELECT * FROM users WHERE id = ?", user)
+    cash = rows[0]["cash"]
     
-    return render_template("account.html")
+    curr_cash = usd(cash)
+    return render_template("account.html", cash=curr_cash)
 
 @app.route("/change_pwd", methods=["GET", "POST"])
 @login_required
@@ -158,9 +161,24 @@ def change_pwd():
         else:
             return apology("You have not entered the correct password")   
             
-        
+@app.route("/addcash", methods=["GET", "POST"])
+@login_required
+def addcash():
+    user = session.get("user_id")
+    rows = db.execute("SELECT * FROM users WHERE id = ?", user)
     
+    if request.method == "POST":
+        amount = request.form.get("cash")
+        
+        if not amount or amount.isalpha() or int(amount) <= 0:
+            return apology("You must enter a valid amount to add", 403)
 
+        db.execute("UPDATE users SET cash = cash + ? WHERE id = ?", (float(amount), user))
+        
+        db.execute("INSERT INTO transactions (user_id, symbol, shares, share_price, value ) VALUES (?,?,?,?,?)", (user, "CASH", 1, amount, amount))
+
+    flash("You have successfully added funds to your account", "success")
+    return redirect("/")
 
 @app.route("/login", methods=["GET", "POST"])
 def login():

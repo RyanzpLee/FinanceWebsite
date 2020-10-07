@@ -20,6 +20,32 @@
         <button class="btn btn-primary" type="submit">Change</button>
     </form>
 
-    </form>
+
+<div id="cash_wrapper">
+    <h2 id="current_cash">You currently have {{ cash }}</h2>
+    
+    <div class="float-center">
+        <h4>Add more funds to your account</h4>
+    </div>
+    
+    <div class="float-center">
+        <form action="/addcash" method="POST">
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" id="cash" type="text" name="cash" placeholder="Amount to add">
+        </div>
+        <button class="btn btn-primary" id="submit" type="submit" disabled>Submit</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.querySelector('#cash').onkeyup = function() {
+        if (document.querySelector("#cash").value === '') {
+            document.querySelector("#submit").disabled = true;
+        } else {
+            document.querySelector("#submit").disabled = false;
+        }   
+    }
+</script>
 
 {% endblock %}

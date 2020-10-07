@@ -43,3 +43,13 @@ main .buy_desc {
   margin-top: 5rem;
   text-align: left;
 }
+
+main #cash_wrapper {
+  margin-top: 5rem;
+  border-top: 1px solid rgb(44, 43, 43);
+}
+
+main #current_cash {
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+}
